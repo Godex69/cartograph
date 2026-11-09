@@ -1,5 +1,7 @@
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { AppShell, ActiveOrganizationData } from '@/components/app-shell';
+import { createAuthenticatedSupabaseClient } from '@/lib/supabase';
+import { Analysis } from '@/lib/types';
 import { Suspense } from 'react';
 
 async function WorkspaceContent() {
@@ -8,7 +10,6 @@ async function WorkspaceContent() {
   const userId = authData.userId;
   let activeOrgId = authData.orgId;
   let activeOrgRole = authData.orgRole;
-  let activeOrgSlug = authData.orgSlug;
 
   const clerk = await clerkClient();
   const user = await currentUser();
@@ -25,7 +26,6 @@ async function WorkspaceContent() {
       const primaryMembership = memberships.data[0];
       activeOrgId = primaryMembership.organization.id;
       activeOrgRole = primaryMembership.role;
-      activeOrgSlug = primaryMembership.organization.slug;
     } else {
       // Auto-create organization for first-time sign-in
       const orgName = user?.firstName
@@ -41,7 +41,6 @@ async function WorkspaceContent() {
 
       activeOrgId = newOrg.id;
       activeOrgRole = 'org:admin';
-      activeOrgSlug = newOrg.slug;
     }
   }
 
@@ -60,7 +59,39 @@ async function WorkspaceContent() {
 
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
 
-  return <AppShell organization={orgData} userEmail={userEmail} />;
+  // Database access happens in server code, not inside components.
+  // The client carries the signed-in token with every request.
+  // Authorization is a property of the database (RLS), not a check in application code.
+  // CRITICAL CONSTRAINT: We do NOT filter by organization in application code!
+  const supabase = await createAuthenticatedSupabaseClient();
+
+  // Ensure current organization exists in the database organizations table
+  try {
+    await supabase.from('organizations').upsert(
+      {
+        id: organization.id,
+        name: organization.name,
+        slug: organization.slug ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' }
+    );
+  } catch {
+    // Non-fatal if already present or restricted
+  }
+
+  const { data: analysesData, error } = await supabase
+    .from('analyses')
+    .select('id, organization_id, project_id, repository_url, branch, commit_hash, status, error_message, summary, created_at, updated_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error querying analyses from Supabase:', error);
+  }
+
+  const analyses: Analysis[] = (analysesData as Analysis[]) ?? [];
+
+  return <AppShell organization={orgData} userEmail={userEmail} analyses={analyses} />;
 }
 
 export default function HomePage() {

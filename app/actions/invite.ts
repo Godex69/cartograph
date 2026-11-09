@@ -46,10 +46,11 @@ export async function inviteMemberAction(prevState: InviteResult | null, formDat
       invitationId: invitation.id,
       email: invitation.emailAddress,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as { errors?: Array<{ message?: string }>; message?: string };
     const message =
-      err?.errors?.[0]?.message ||
-      err?.message ||
+      errorObj?.errors?.[0]?.message ||
+      errorObj?.message ||
       'Failed to send invitation. Check if member is already invited.';
     return {
       success: false,

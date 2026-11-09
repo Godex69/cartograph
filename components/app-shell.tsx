@@ -4,6 +4,8 @@ import { OrganizationSwitcher, UserButton } from '@clerk/nextjs';
 import { ThemeToggle } from './theme-toggle';
 import { InviteModal } from './invite-modal';
 import { OrgSync } from './org-sync';
+import { Dashboard } from './dashboard';
+import { Analysis } from '@/lib/types';
 
 export interface ActiveOrganizationData {
   id: string;
@@ -16,9 +18,10 @@ export interface ActiveOrganizationData {
 interface AppShellProps {
   organization: ActiveOrganizationData;
   userEmail?: string | null;
+  analyses: Analysis[];
 }
 
-export function AppShell({ organization, userEmail }: AppShellProps) {
+export function AppShell({ organization, userEmail, analyses }: AppShellProps) {
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground antialiased selection:bg-accent/20">
       {/* Background session sync */}
@@ -110,58 +113,18 @@ export function AppShell({ organization, userEmail }: AppShellProps) {
             <div className="rounded border border-dashed border-border p-3 text-center text-[11px] leading-relaxed">
               No repository loaded yet.
               <div className="mt-1 text-[10px] text-foreground-dim">
-                Phase 2 will parse AST imports from public git repositories.
+                Phase 3 parses AST imports and edges from public repositories.
               </div>
             </div>
           </div>
         </aside>
 
-        {/* Panel 2: Center Map Canvas */}
+        {/* Panel 2: Center Map Canvas / Analyses Dashboard */}
         <main className="flex-1 flex flex-col relative overflow-hidden bg-background">
-          {/* Canvas Sub-header with Semantic Palette Legend */}
-          <div className="flex h-8 items-center justify-between border-b border-border bg-surface/80 px-3 backdrop-blur-xs font-mono text-[11px]">
-            <div className="flex items-center gap-3">
-              <span className="text-foreground-muted">CANVAS:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-incoming inline-block" />
-                <span className="text-incoming font-medium text-[10px]">incoming (imported by)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-outgoing inline-block" />
-                <span className="text-outgoing font-medium text-[10px]">outgoing (imports)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-accent inline-block" />
-                <span className="text-accent font-medium text-[10px]">selected / interactive</span>
-              </div>
-            </div>
-            <div className="text-foreground-dim text-[10px]">
-              Active Org ID: <span className="font-mono text-foreground-muted">{organization.id}</span>
-            </div>
-          </div>
-
-          {/* Canvas Content Area */}
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="max-w-md rounded-lg border border-border bg-surface p-6 text-center shadow-xs">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface-raised font-mono text-accent">
-                ✛
-              </div>
-              <h2 className="text-sm font-semibold text-foreground">
-                {organization.name} Workspace
-              </h2>
-              <p className="mt-2 text-xs text-foreground-muted leading-relaxed">
-                You are authenticated inside your team organization. All subsequent codebase mappings,
-                AST dependency graphs, and token-based RLS queries will be scoped to this tenant.
-              </p>
-              <div className="mt-4 inline-flex items-center gap-2 rounded bg-surface-raised px-3 py-1 font-mono text-[11px] text-foreground-dim border border-border-subtle">
-                <span className="h-1.5 w-1.5 rounded-full bg-incoming animate-pulse" />
-                Token session active & verified
-              </div>
-            </div>
-          </div>
+          <Dashboard analyses={analyses} organizationName={organization.name} />
 
           {/* Panel 4: Bottom Collapsible Query / Trace Panel */}
-          <div className="h-24 border-t border-border bg-surface px-3 py-2 flex flex-col justify-between font-mono text-xs">
+          <div className="h-24 border-t border-border bg-surface px-3 py-2 flex flex-col justify-between font-mono text-xs shrink-0">
             <div className="flex items-center justify-between text-[11px] text-foreground-muted">
               <span>REPOSITORY QUERY / AGENT TRACE</span>
               <span className="text-[10px] text-foreground-dim">Verification: Strict AST match</span>
@@ -196,6 +159,26 @@ export function AppShell({ organization, userEmail }: AppShellProps) {
               <div className="mt-1 font-medium text-foreground text-xs">{organization.name}</div>
               <div className="mt-0.5 text-[10px] text-foreground-muted break-all">
                 ID: {organization.id}
+              </div>
+            </div>
+
+            <div className="rounded border border-border-subtle bg-surface-raised p-2.5">
+              <div className="text-[10px] text-foreground-dim uppercase tracking-wider">
+                Workspace Status
+              </div>
+              <div className="mt-2 space-y-1.5 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-foreground-muted">Analyses:</span>
+                  <span className="text-foreground font-medium">{analyses.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-foreground-muted">Security:</span>
+                  <span className="text-incoming font-medium">RLS Enforced</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-foreground-muted">Isolation:</span>
+                  <span className="text-foreground font-medium">Token Claims</span>
+                </div>
               </div>
             </div>
 

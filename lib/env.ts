@@ -3,7 +3,7 @@
  * Fails loudly at startup if any required variable is missing or blank.
  */
 
-function getEnv(key: string, isPublic = false): string {
+function getEnv(key: string): string {
   const value = process.env[key];
   if (!value || value.trim() === '') {
     throw new Error(
@@ -16,16 +16,16 @@ function getEnv(key: string, isPublic = false): string {
 
 export const env = {
   get NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY() {
-    return getEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', true);
+    return getEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY');
   },
   get CLERK_SECRET_KEY() {
     return getEnv('CLERK_SECRET_KEY');
   },
   get NEXT_PUBLIC_SUPABASE_URL() {
-    return getEnv('NEXT_PUBLIC_SUPABASE_URL', true);
+    return getEnv('NEXT_PUBLIC_SUPABASE_URL');
   },
   get NEXT_PUBLIC_SUPABASE_ANON_KEY() {
-    return getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', true);
+    return getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
   },
 };
 

@@ -1,22 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-export function ThemeToggle() {
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<ThemeMode>('system');
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    setMounted(true);
-    const stored = (localStorage.getItem('cartograph-theme') as ThemeMode) || 'system';
-    setTheme(stored);
-  }, []);
+function subscribeTheme(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener('cartograph-theme-change', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('cartograph-theme-change', callback);
+  };
+}
+
+function getThemeSnapshot(): ThemeMode {
+  if (typeof window === 'undefined') return 'system';
+  return (localStorage.getItem('cartograph-theme') as ThemeMode) || 'system';
+}
+
+function getServerThemeSnapshot(): ThemeMode {
+  return 'system';
+}
+
+export function ThemeToggle() {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerThemeSnapshot);
 
   const applyTheme = (mode: ThemeMode) => {
-    setTheme(mode);
     localStorage.setItem('cartograph-theme', mode);
+    window.dispatchEvent(new Event('cartograph-theme-change'));
 
     const root = document.documentElement;
     const isDark =
@@ -66,44 +80,43 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label="Theme selection"
-      className="inline-flex items-center rounded border border-border bg-surface-raised p-0.5 text-xs font-mono select-none"
+      className="flex items-center rounded border border-border bg-surface p-0.5 text-xs font-mono"
     >
       <button
         type="button"
+        data-testid="theme-btn-system"
         onClick={() => applyTheme('system')}
-        data-active={theme === 'system'}
-        className={`px-2 py-0.5 rounded transition-colors ${
+        className={`rounded px-2 py-0.5 transition-colors focus:outline-hidden ${
           theme === 'system'
-            ? 'bg-surface font-semibold text-foreground shadow-xs'
+            ? 'bg-accent/15 text-accent font-semibold border border-accent/30'
             : 'text-foreground-muted hover:text-foreground'
         }`}
-        title="Follow system theme"
       >
-        system
+        sys
       </button>
+
       <button
         type="button"
+        data-testid="theme-btn-light"
         onClick={() => applyTheme('light')}
-        data-active={theme === 'light'}
-        className={`px-2 py-0.5 rounded transition-colors ${
+        className={`rounded px-2 py-0.5 transition-colors focus:outline-hidden ${
           theme === 'light'
-            ? 'bg-surface font-semibold text-foreground shadow-xs'
+            ? 'bg-accent/15 text-accent font-semibold border border-accent/30'
             : 'text-foreground-muted hover:text-foreground'
         }`}
-        title="Force light theme"
       >
         light
       </button>
+
       <button
         type="button"
+        data-testid="theme-btn-dark"
         onClick={() => applyTheme('dark')}
-        data-active={theme === 'dark'}
-        className={`px-2 py-0.5 rounded transition-colors ${
+        className={`rounded px-2 py-0.5 transition-colors focus:outline-hidden ${
           theme === 'dark'
-            ? 'bg-surface font-semibold text-foreground shadow-xs'
+            ? 'bg-accent/15 text-accent font-semibold border border-accent/30'
             : 'text-foreground-muted hover:text-foreground'
         }`}
-        title="Force dark theme"
       >
         dark
       </button>
