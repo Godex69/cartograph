@@ -59,3 +59,40 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+/* Ensure React Flow nodes always receive mouse clicks and have pointer cursor */
+.react-flow__node {
+  pointer-events: all !important;
+  cursor: pointer;
+}
+
+/* All edges/wires must strictly render behind folder containers */
+.react-flow__edges,
+.react-flow__edge {
+  z-index: 1 !important;
+}
+
+.react-flow__nodes,
+.react-flow__node {
+  z-index: 10 !important;
+}
+
+/* Smooth transitions for React Flow connection edges */
+.react-flow__edge-path {
+  transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+}
+
+/* Clean, slim scrollbar for scrollable panel file list */
+.nowheel::-webkit-scrollbar {
+  width: 5px;
+}
+.nowheel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nowheel::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+.nowheel::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground-dim);
+}
