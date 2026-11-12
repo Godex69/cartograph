@@ -5,6 +5,7 @@ const isPublicRoute = (pathname: string) => {
   return (
     pathname.startsWith("/sign-in") ||
     pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/preview") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico")
   );
